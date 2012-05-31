@@ -4576,6 +4576,20 @@ void BaseGui::setStayOnTop(bool b)
 {
     qDebug("BaseGui::setStayOnTop: %d", b);
 
+#ifdef Q_WS_WIN
+    if (b == bool(GetWindowLongPtr(winId(), GWL_EXSTYLE) & WS_EX_TOPMOST)) {
+        // identical do nothing
+        qDebug("BaseGui::setStayOnTop: nothing to do");
+        return;
+    }
+    if (b) {
+        SetWindowPos(winId(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        overrideWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+    } else {
+        SetWindowPos(winId(), HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        overrideWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
+    }
+#else
     if ((b && (windowFlags() & Qt::WindowStaysOnTopHint)) ||
             (!b && (!(windowFlags() & Qt::WindowStaysOnTopHint)))) {
         // identical do nothing
@@ -4602,6 +4616,7 @@ void BaseGui::setStayOnTop(bool b)
     }
 
     ignore_show_hide_events = false;
+#endif
 }
 
 void BaseGui::changeStayOnTop(int stay_on_top)
